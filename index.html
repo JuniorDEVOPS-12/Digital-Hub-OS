@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="frontend/css/index.css">
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -100,6 +101,13 @@
             </div>
             <div class="topbar-right">
                 <div class="current-date" id="currentDate"></div>
+                <button class="btn-icon" id="logoutBtn" title="Déconnexion" style="margin-right: var(--space-sm);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </button>
                 <div class="admin-avatar">
                     <span>A</span>
                 </div>

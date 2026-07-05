@@ -1,6 +1,7 @@
 import { initDatabase } from '../backend/api.js';
 import { setupNavigation, navigateTo } from './core/router.js';
 import { setupModalCloseEvents } from './core/modal.js';
+import { logout } from './core/auth.js';
 import { $ } from './core/dom.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
+        });
+    }
+
+    // Setup logout button
+    const logoutBtn = $('#logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await logout();
         });
     }
 

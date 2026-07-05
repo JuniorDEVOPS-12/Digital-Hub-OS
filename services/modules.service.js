@@ -1,3 +1,8 @@
+import { TRAINING_START_TIME, TRAINING_END_TIME } from '../config/constants.js';
+import { createModule, updateModuleFields } from '../data/models/module.model.js';
+import { createScheduleEntry } from '../data/models/schedule.model.js';
+import { AppError, ErrorCodes } from '../data/errors/app-error.js';
+
 export class ModulesService {
     constructor(modulesProvider, scheduleProvider, trainersProvider) {
         this.modulesProvider = modulesProvider;
@@ -17,7 +22,7 @@ export class ModulesService {
         const schedule = this.scheduleProvider.getAll();
         const todayEntry = schedule.find(s => s.date === date);
         if (!todayEntry) return null;
-        
+
         const modules = this.getAll();
         return modules.find(m => m.id === todayEntry.moduleId) || null;
     }
@@ -28,63 +33,66 @@ export class ModulesService {
         return this.trainersProvider.getById(module.trainerId);
     }
 
-    create(moduleItem) {
-        // Validation: trainerId is required
-        if (!moduleItem.trainerId) {
-            throw new Error('Un formateur doit être assigné au module');
+    create(input) {
+        if (!input.trainerId) {
+            throw new AppError('Un formateur doit être assigné au module', ErrorCodes.VALIDATION);
         }
-        
-        // Validate trainer exists
-        const trainer = this.trainersProvider.getById(moduleItem.trainerId);
+
+        const trainer = this.trainersProvider.getById(input.trainerId);
         if (!trainer) {
-            throw new Error('Le formateur spécifié n\'existe pas');
+            throw new AppError('Le formateur spécifié n\'existe pas', ErrorCodes.NOT_FOUND);
         }
-        
+
+        const moduleItem = createModule(input);
         const created = this.modulesProvider.create(moduleItem);
         this.regenerateSchedule();
         return created;
     }
 
     update(id, updatedFields) {
-        // If trainerId is being updated, validate it exists
         if (updatedFields.trainerId) {
             const trainer = this.trainersProvider.getById(updatedFields.trainerId);
             if (!trainer) {
-                throw new Error('Le formateur spécifié n\'existe pas');
+                throw new AppError('Le formateur spécifié n\'existe pas', ErrorCodes.NOT_FOUND);
             }
         }
-        
-        const updated = this.modulesProvider.update(id, updatedFields);
-        
-        // Only regenerate schedule if duration or order changed
+
+        const existing = this.modulesProvider.getById(id);
+        if (!existing) {
+            throw new AppError('Module introuvable.', ErrorCodes.NOT_FOUND);
+        }
+
+        const updated = updateModuleFields(existing, updatedFields);
+        const result = this.modulesProvider.update(id, updated);
+
         if (updatedFields.duration !== undefined || updatedFields.order !== undefined) {
             this.regenerateSchedule();
         }
-        
-        return updated;
+
+        return result;
     }
 
     delete(id) {
         const deleted = this.modulesProvider.delete(id);
-        if (deleted) {
-            this.regenerateSchedule();
+        if (!deleted) {
+            throw new AppError('Module introuvable.', ErrorCodes.NOT_FOUND);
         }
+        this.regenerateSchedule();
         return deleted;
     }
 
     regenerateSchedule() {
         if (!this.scheduleProvider) return;
         const modules = this.getAll();
-        
+
         if (modules.length === 0) {
             this.scheduleProvider.saveAll([]);
             return;
         }
-        
-        // Find starting Monday for current month
+
         const today = new Date();
         let startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        while (startDate.getDay() !== 1) { // 1 = Monday
+        while (startDate.getDay() !== 1) {
             startDate.setDate(startDate.getDate() + 1);
         }
 
@@ -97,34 +105,30 @@ export class ModulesService {
         let currentDate = new Date(startDate);
         let moduleIndex = 0;
         let daysInCurrentModule = 0;
-        
-        // Generate 30 days of schedule
+
         for (let day = 0; day < 30; day++) {
-            const dayOfWeek = currentDate.getDay(); // 1=Mon, ..., 5=Fri
-            
-            // Only weekdays (1-5)
+            const dayOfWeek = currentDate.getDay();
+
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
                 if (moduleIndex < modules.length) {
                     const currentModule = modules[moduleIndex];
-                    
-                    schedule.push({
-                        id: Math.random().toString(36).substring(2, 9),
+
+                    schedule.push(createScheduleEntry({
                         date: currentDate.toISOString().split('T')[0],
                         moduleId: currentModule.id,
-                        startTime: '16:00',
-                        endTime: '19:00',
-                    });
-                    
+                        startTime: TRAINING_START_TIME,
+                        endTime: TRAINING_END_TIME,
+                    }));
+
                     daysInCurrentModule++;
-                    
-                    // Move to next module if duration reached
+
                     if (daysInCurrentModule >= currentModule.duration) {
                         moduleIndex++;
                         daysInCurrentModule = 0;
                     }
                 }
             }
-            
+
             currentDate.setDate(currentDate.getDate() + 1);
         }
 

@@ -1,12 +1,23 @@
-import { store } from '../store.js';
+/* ========================================
+   Digital Hub OS — Base Provider (Array CRUD)
+   ======================================== */
 
+import { defaultStorageAdapter } from '../adapters/storage.adapter.js';
+import { AppError, ErrorCodes } from '../errors/app-error.js';
+
+/** @implements {import('../repository.interface.js').IRepository} */
 export class BaseProvider {
-    constructor(storageKey) {
+    /**
+     * @param {string} storageKey
+     * @param {import('../adapters/storage.adapter.js').StorageAdapter} [storageAdapter]
+     */
+    constructor(storageKey, storageAdapter = defaultStorageAdapter) {
         this.storageKey = storageKey;
+        this.storage = storageAdapter;
     }
 
     getAll() {
-        return store.load(this.storageKey) || [];
+        return this.storage.load(this.storageKey) || [];
     }
 
     getById(id) {
@@ -15,7 +26,11 @@ export class BaseProvider {
     }
 
     saveAll(items) {
-        return store.save(this.storageKey, items);
+        const saved = this.storage.save(this.storageKey, items);
+        if (!saved) {
+            throw new AppError('Échec de la sauvegarde des données.', ErrorCodes.STORAGE);
+        }
+        return saved;
     }
 
     create(item) {
@@ -29,7 +44,7 @@ export class BaseProvider {
         const items = this.getAll();
         const index = items.findIndex(item => item.id === id);
         if (index === -1) return null;
-        
+
         items[index] = { ...items[index], ...updatedFields };
         this.saveAll(items);
         return items[index];
@@ -39,9 +54,9 @@ export class BaseProvider {
         const items = this.getAll();
         const initialLength = items.length;
         const filtered = items.filter(item => item.id !== id);
-        
+
         if (filtered.length === initialLength) return false;
-        
+
         this.saveAll(filtered);
         return true;
     }
@@ -51,6 +66,6 @@ export class BaseProvider {
     }
 
     clear() {
-        store.remove(this.storageKey);
+        this.storage.remove(this.storageKey);
     }
 }

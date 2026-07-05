@@ -1,17 +1,10 @@
-import { store } from '../store.js';
+import { BaseMapProvider } from './base-map.provider.js';
 import { STORAGE_KEYS } from '../../config/constants.js';
+import { createEmptyAttendanceRecord } from '../models/attendance.model.js';
 
-export class AttendanceProvider {
-    constructor() {
-        this.storageKey = STORAGE_KEYS.attendance;
-    }
-
-    getAll() {
-        return store.load(this.storageKey) || {};
-    }
-
-    saveAll(attendanceData) {
-        return store.save(this.storageKey, attendanceData);
+export class AttendanceProvider extends BaseMapProvider {
+    constructor(storageAdapter) {
+        super(STORAGE_KEYS.attendance, storageAdapter);
     }
 
     getByDate(date) {
@@ -24,13 +17,13 @@ export class AttendanceProvider {
         if (!attendance[date]) {
             attendance[date] = {};
         }
-        
+
         if (status) {
             attendance[date][studentId] = status;
         } else {
             delete attendance[date][studentId];
         }
-        
+
         this.saveAll(attendance);
         return attendance[date];
     }
@@ -42,7 +35,7 @@ export class AttendanceProvider {
         return {};
     }
 
-    clear() {
-        store.remove(this.storageKey);
+    seed(seedData) {
+        this.saveAll(seedData ?? createEmptyAttendanceRecord());
     }
 }

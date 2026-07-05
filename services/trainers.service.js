@@ -1,3 +1,6 @@
+import { createTrainer, updateTrainerFields } from '../data/models/trainer.model.js';
+import { AppError, ErrorCodes } from '../data/errors/app-error.js';
+
 export class TrainersService {
     constructor(trainersProvider, modulesProvider) {
         this.trainersProvider = trainersProvider;
@@ -23,18 +26,26 @@ export class TrainersService {
         return modules.filter(m => m.trainerId === trainerId);
     }
 
-    create(trainer) {
+    create(input) {
+        const trainer = createTrainer(input);
         return this.trainersProvider.create(trainer);
     }
 
     update(id, updatedFields) {
-        return this.trainersProvider.update(id, updatedFields);
+        const existing = this.trainersProvider.getById(id);
+        if (!existing) {
+            throw new AppError('Formateur introuvable.', ErrorCodes.NOT_FOUND);
+        }
+        const updated = updateTrainerFields(existing, updatedFields);
+        return this.trainersProvider.update(id, updated);
     }
 
     delete(id) {
-        // Business logic: if trainer is deleted, remove assignment from modules
         const deleted = this.trainersProvider.delete(id);
-        if (deleted && this.modulesProvider) {
+        if (!deleted) {
+            throw new AppError('Formateur introuvable.', ErrorCodes.NOT_FOUND);
+        }
+        if (this.modulesProvider) {
             const modules = this.modulesProvider.getAll();
             let updated = false;
             modules.forEach(mod => {

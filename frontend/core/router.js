@@ -1,5 +1,6 @@
 import { $, $$ } from './dom.js';
 import { SECTIONS } from '../../config/constants.js';
+import { requireAuth, checkAuth } from './auth.js';
 
 import { renderDashboard } from '../pages/dashboard.page.js';
 import { renderStudents } from '../pages/students.page.js';
@@ -7,8 +8,10 @@ import { renderTrainers } from '../pages/trainers.page.js';
 import { renderModules } from '../pages/modules.page.js';
 import { renderSchedule } from '../pages/schedule.page.js';
 import { renderAttendance } from '../pages/attendance.page.js';
+import { renderLogin } from '../pages/login.page.js';
 
 const pages = {
+    login: renderLogin,
     dashboard: renderDashboard,
     students: renderStudents,
     trainers: renderTrainers,
@@ -19,10 +22,31 @@ const pages = {
 
 let currentSection = 'dashboard';
 
-export function navigateTo(section) {
+export async function navigateTo(section) {
     if (!pages[section]) return;
 
+    // Auth guard: redirect to login if not authenticated (except for login page)
+    if (section !== 'login') {
+        const isAuth = await requireAuth();
+        if (!isAuth) return;
+    }
+
     currentSection = section;
+
+    // Show/hide sidebar and topbar based on login state
+    const sidebar = $('#sidebar');
+    const topbar = $('.topbar');
+    const mainContent = $('#mainContent');
+    
+    if (section === 'login') {
+        if (sidebar) sidebar.style.display = 'none';
+        if (topbar) topbar.style.display = 'none';
+        if (mainContent) mainContent.style.marginLeft = '0';
+    } else {
+        if (sidebar) sidebar.style.display = 'flex';
+        if (topbar) topbar.style.display = 'flex';
+        if (mainContent) mainContent.style.marginLeft = '';
+    }
 
     // Update active state in sidebar nav items
     $$('.nav-item').forEach(n => n.classList.remove('active'));
@@ -39,7 +63,6 @@ export function navigateTo(section) {
     }
 
     // Close Mobile Sidebar if open
-    const sidebar = $('#sidebar');
     if (sidebar) sidebar.classList.remove('open');
 
     // Render the page
@@ -59,7 +82,15 @@ export function getCurrentSection() {
     return currentSection;
 }
 
-export function setupNavigation() {
+export async function setupNavigation() {
+    // Check auth on initial load
+    const { isAuthenticated } = await checkAuth();
+    
+    // If not authenticated and not on login page, redirect to login
+    if (!isAuthenticated && window.location.hash !== '#login') {
+        window.location.hash = '#login';
+    }
+
     $$('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();

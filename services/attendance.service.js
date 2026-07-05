@@ -1,4 +1,5 @@
-import { ATTENDANCE_STATUS } from '../config/constants.js';
+import { ATTENDANCE_STATUS, isValidAttendanceStatus } from '../data/models/attendance.model.js';
+import { AppError, ErrorCodes } from '../data/errors/app-error.js';
 
 export class AttendanceService {
     constructor(attendanceProvider) {
@@ -10,6 +11,9 @@ export class AttendanceService {
     }
 
     setStatus(date, studentId, status) {
+        if (status && !isValidAttendanceStatus(status)) {
+            throw new AppError('Statut de présence invalide.', ErrorCodes.VALIDATION);
+        }
         return this.attendanceProvider.setStatus(date, studentId, status);
     }
 
@@ -21,7 +25,7 @@ export class AttendanceService {
         });
         this.attendanceProvider.saveAll({
             ...this.attendanceProvider.getAll(),
-            [date]: updated
+            [date]: updated,
         });
         return updated;
     }
@@ -34,7 +38,7 @@ export class AttendanceService {
         const attendanceData = this.attendanceProvider.getAll();
         let totalPresent = 0;
         let totalRecords = 0;
-        
+
         Object.values(attendanceData).forEach(dayData => {
             Object.entries(dayData).forEach(([studentId, status]) => {
                 if (activeStudentIds.includes(studentId)) {
@@ -50,7 +54,7 @@ export class AttendanceService {
         return {
             rate,
             totalPresent,
-            totalRecords
+            totalRecords,
         };
     }
 }

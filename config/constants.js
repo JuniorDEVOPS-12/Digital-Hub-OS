@@ -47,6 +47,7 @@ export const STORAGE_KEYS = {
     modules: 'dhos_modules',
     attendance: 'dhos_attendance',
     schedule: 'dhos_schedule',
+    settings: 'dhos_settings',
 };
 
 // --- Sections (navigation) ---

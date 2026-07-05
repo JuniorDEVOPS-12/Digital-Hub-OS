@@ -14,12 +14,16 @@ import { seedStudents } from '../data/seeds/students.seed.js';
 import { seedTrainers } from '../data/seeds/trainers.seed.js';
 import { seedModules } from '../data/seeds/modules.seed.js';
 
-// Instantiate Providers (Singleton instances)
-const studentsProvider = new StudentsProvider();
-const trainersProvider = new TrainersProvider();
-const modulesProvider = new ModulesProvider();
-const attendanceProvider = new AttendanceProvider();
-const scheduleProvider = new ScheduleProvider();
+import { adapterFor, hydrateSupabaseAdapters } from '../data/adapters/adapter-factory.js';
+
+// Instantiate Providers (Singleton instances).
+// L'adaptateur de stockage est choisi par entité (Supabase ou localStorage)
+// selon les drapeaux de migration progressive — voir data/supabase/config.js.
+const studentsProvider = new StudentsProvider(adapterFor('students'));
+const trainersProvider = new TrainersProvider(adapterFor('trainers'));
+const modulesProvider = new ModulesProvider(adapterFor('modules'));
+const attendanceProvider = new AttendanceProvider(adapterFor('attendance'));
+const scheduleProvider = new ScheduleProvider(adapterFor('schedule'));
 
 // Instantiate Services (Injecting provider dependencies)
 const studentsService = new StudentsService(studentsProvider);
@@ -27,6 +31,14 @@ const trainersService = new TrainersService(trainersProvider, modulesProvider);
 const modulesService = new ModulesService(modulesProvider, scheduleProvider, trainersProvider);
 const attendanceService = new AttendanceService(attendanceProvider);
 const scheduleService = new ScheduleService(scheduleProvider, modulesProvider);
+
+// Bootstrap asynchrone : hydrate d'abord les données depuis Supabase (pour les
+// entités migrées) puis applique le seeding local si nécessaire. À appeler au
+// démarrage à la place de initDatabase() lorsque Supabase est actif.
+export async function initDataLayer() {
+    await hydrateSupabaseAdapters();
+    initDatabase();
+}
 
 // Self-initialization & Seeding if empty
 export function initDatabase() {

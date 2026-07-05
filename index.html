@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Hub OS — Centre de Formation</title>
+    <meta name="description" content="Système interne de gestion pour centre de formation — Digital Hub OS">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="frontend/css/index.css">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="assets/logo.svg" alt="Digital Hub Logo" class="logo-image">
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <span>Tableau de bord</span>
+            </a>
+            <a href="#" class="nav-item" data-section="students" id="nav-students">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>Étudiants</span>
+            </a>
+            <a href="#" class="nav-item" data-section="trainers" id="nav-trainers">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Formateurs</span>
+            </a>
+            <a href="#" class="nav-item" data-section="modules" id="nav-modules">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    <line x1="8" y1="7" x2="16" y2="7"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+                <span>Modules</span>
+            </a>
+            <a href="#" class="nav-item" data-section="schedule" id="nav-schedule">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>Planning</span>
+            </a>
+            <a href="#" class="nav-item" data-section="attendance" id="nav-attendance">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <span>Présences</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="cohort-badge">
+                <div class="cohort-dot"></div>
+                <span>Cohorte 2026 — 50 places</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+            <div class="topbar-left">
+                <h1 class="page-title" id="pageTitle">Tableau de bord</h1>
+                <p class="page-subtitle" id="pageSubtitle">Vue d'ensemble de la formation</p>
+            </div>
+            <div class="topbar-right">
+                <div class="current-date" id="currentDate"></div>
+                <div class="admin-avatar">
+                    <span>A</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area" id="contentArea">
+            <!-- Dynamic content injected by JS -->
+        </div>
+    </main>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Titre</h2>
+                <button class="modal-close" id="modalClose" aria-label="Fermer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic modal content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script type="module" src="frontend/app.js"></script>
+</body>
+</html>

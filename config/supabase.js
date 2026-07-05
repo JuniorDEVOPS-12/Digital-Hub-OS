@@ -3,8 +3,10 @@
    ======================================== */
 
 // Configuration Supabase
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zwyojlrjirtgzztenned.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3eW9qbHJqaXJ0Z3p6dGVubmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDkwNjgsImV4cCI6MjA5ODgyNTA2OH0.OnIS7HKpe1lTKuAnY_mibUm5nNNRuNEqsge9RVghkVo';
+// `import.meta.env` n'existe que sous un bundler (Vite). En service statique
+// (server.ps1 / navigateur), on retombe sur les valeurs par défaut.
+const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://zwyojlrjirtgzztenned.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3eW9qbHJqaXJ0Z3p6dGVubmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDkwNjgsImV4cCI6MjA5ODgyNTA2OH0.OnIS7HKpe1lTKuAnY_mibUm5nNNRuNEqsge9RVghkVo';
 
 // Client Supabase sera initialisé après chargement du script
 let supabaseClient = null;

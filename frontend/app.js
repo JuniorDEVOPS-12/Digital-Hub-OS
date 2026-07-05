@@ -1,12 +1,22 @@
-import { initDatabase } from '../backend/api.js';
-import { setupNavigation, navigateTo } from './core/router.js';
+import { initDataLayer } from '../backend/api.js';
+import { setupNavigation, navigateTo, getCurrentSection } from './core/router.js';
 import { setupModalCloseEvents } from './core/modal.js';
-import { logout } from './core/auth.js';
+import { logout, initAuthListener } from './core/auth.js';
+import { hydrateSupabaseAdapters } from '../data/adapters/adapter-factory.js';
 import { $ } from './core/dom.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Bootstrap database and seed configuration
-    initDatabase();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Bootstrap data layer: hydrate depuis Supabase (entités migrées) puis seed
+    await initDataLayer();
+
+    // Ré-hydrate et rafraîchit l'écran après connexion (la session RLS devient
+    // disponible), sans toucher au système d'authentification.
+    initAuthListener(async ({ event }) => {
+        if (event === 'SIGNED_IN') {
+            await hydrateSupabaseAdapters();
+            navigateTo(getCurrentSection());
+        }
+    });
 
     // Setup SPA router and navigation event listeners
     setupNavigation();

@@ -4,8 +4,8 @@ import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials, ATTENDANCE_STATUS, formatDateFR } from '../../config/constants.js';
 import { PDFService } from '../../services/pdf.service.js';
 
-export function renderAttendance(container) {
-    const scheduled = [...new Set(api.schedule.getAll().map(s => s.date))].sort();
+export async function renderAttendance(container) {
+    const scheduled = [...new Set((await api.schedule.getAll()).map(s => s.date))].sort();
 
     if (scheduled.length === 0) {
         container.innerHTML = `
@@ -26,15 +26,15 @@ export function renderAttendance(container) {
         currentDateIdx = scheduled.length - 1;
     }
 
-    function renderDay() {
+    async function renderDay() {
         const dateStr = scheduled[currentDateIdx];
-        const scheduleEntry = api.schedule.getAll().find(s => s.date === dateStr);
-        const mod = scheduleEntry ? api.modules.getAll().find(m => m.id === scheduleEntry.moduleId) : null;
-        const trainer = mod ? api.trainers.getAll().find(t => t.id === mod.trainerId) : null;
+        const scheduleEntry = (await api.schedule.getAll()).find(s => s.date === dateStr);
+        const mod = scheduleEntry ? (await api.modules.getAll()).find(m => m.id === scheduleEntry.moduleId) : null;
+        const trainer = mod ? (await api.trainers.getAll()).find(t => t.id === mod.trainerId) : null;
         const dateLabel = formatDateFR(dateStr);
 
-        const dayAttendance = api.attendance.getByDate(dateStr);
-        const activeStudents = api.students.getAll().filter(s => s.status === 'active');
+        const dayAttendance = await api.attendance.getByDate(dateStr);
+        const activeStudents = (await api.students.getAll()).filter(s => s.status === 'active');
 
         // Stats calculation
         let presentCount = 0, absentCount = 0, lateCount = 0;
@@ -123,32 +123,32 @@ export function renderAttendance(container) {
         }
 
         container.querySelectorAll('.attendance-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const studentId = btn.dataset.student;
                 const status = btn.dataset.status;
                 const active = btn.classList.contains('active');
                 
                 // Toggle status
-                api.attendance.setStatus(dateStr, studentId, active ? null : status);
+                await api.attendance.setStatus(dateStr, studentId, active ? null : status);
                 renderDay();
             });
         });
 
-        $('#markAllPresent').addEventListener('click', () => {
+        $('#markAllPresent').addEventListener('click', async () => {
             const studentIds = activeStudents.map(s => s.id);
-            api.attendance.markAllPresent(dateStr, studentIds);
+            await api.attendance.markAllPresent(dateStr, studentIds);
             showToast('Tous les étudiants marqués présents');
             renderDay();
         });
 
-        $('#clearAll').addEventListener('click', () => {
-            api.attendance.clear(dateStr);
+        $('#clearAll').addEventListener('click', async () => {
+            await api.attendance.clear(dateStr);
             showToast('Présences réinitialisées', 'info');
             renderDay();
         });
 
-        $('#downloadAttendancePDF').addEventListener('click', () => {
-            pdfService.generateAttendanceSheet(dateStr);
+        $('#downloadAttendancePDF').addEventListener('click', async () => {
+            await pdfService.generateAttendanceSheet(dateStr);
             showToast('PDF généré avec succès');
         });
     }

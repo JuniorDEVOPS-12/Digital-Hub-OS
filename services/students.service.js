@@ -7,17 +7,17 @@ export class StudentsService {
         this.studentsProvider = studentsProvider;
     }
 
-    getAll() {
-        return this.studentsProvider.getAll();
+    async getAll() {
+        return await this.studentsProvider.getAll();
     }
 
-    getById(id) {
-        return this.studentsProvider.getById(id);
+    async getById(id) {
+        return await this.studentsProvider.getById(id);
     }
 
-    create(input) {
+    async create(input) {
         const student = createStudent(input);
-        const students = this.getAll();
+        const students = await this.getAll();
         const activeStudents = students.filter(s => s.status === 'active');
         if (student.status === 'active' && activeStudents.length >= COHORT_MAX_STUDENTS) {
             throw new AppError(
@@ -25,30 +25,31 @@ export class StudentsService {
                 ErrorCodes.BUSINESS_RULE
             );
         }
-        return this.studentsProvider.create(student);
+        return await this.studentsProvider.create(student);
     }
 
-    update(id, updatedFields) {
-        const existing = this.studentsProvider.getById(id);
+    async update(id, updatedFields) {
+        const existing = await this.studentsProvider.getById(id);
         if (!existing) {
             throw new AppError('Étudiant introuvable.', ErrorCodes.NOT_FOUND);
         }
         const updated = updateStudentFields(existing, updatedFields);
-        return this.studentsProvider.update(id, updated);
+        return await this.studentsProvider.update(id, updated);
     }
 
-    delete(id) {
-        const deleted = this.studentsProvider.delete(id);
+    async delete(id) {
+        const deleted = await this.studentsProvider.delete(id);
         if (!deleted) {
             throw new AppError('Étudiant introuvable.', ErrorCodes.NOT_FOUND);
         }
         return deleted;
     }
 
-    search(query) {
-        if (!query) return this.getAll();
+    async search(query) {
+        if (!query) return await this.getAll();
         const lowerQuery = query.toLowerCase();
-        return this.getAll().filter(s => {
+        const students = await this.getAll();
+        return students.filter(s => {
             const fullName = `${s.firstName} ${s.lastName} ${s.email}`.toLowerCase();
             return fullName.includes(lowerQuery);
         });

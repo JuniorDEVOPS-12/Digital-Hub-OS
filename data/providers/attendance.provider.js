@@ -1,19 +1,28 @@
-import { BaseMapProvider } from './base-map.provider.js';
+import { AttendanceAPI } from '../supabase/attendance.api.js';
 import { STORAGE_KEYS } from '../../config/constants.js';
 import { createEmptyAttendanceRecord } from '../models/attendance.model.js';
 
-export class AttendanceProvider extends BaseMapProvider {
-    constructor(storageAdapter) {
-        super(STORAGE_KEYS.attendance, storageAdapter);
+export class AttendanceProvider {
+    constructor() {
+        this.api = new AttendanceAPI();
+        this.storageKey = STORAGE_KEYS.attendance;
     }
 
-    getByDate(date) {
-        const attendance = this.getAll();
+    async getAll() {
+        return await this.api.getAll();
+    }
+
+    async getById(id) {
+        return await this.api.getById(id);
+    }
+
+    async getByDate(date) {
+        const attendance = await this.getAll();
         return attendance[date] || {};
     }
 
-    setStatus(date, studentId, status) {
-        const attendance = this.getAll();
+    async setStatus(date, studentId, status) {
+        const attendance = await this.getAll();
         if (!attendance[date]) {
             attendance[date] = {};
         }
@@ -24,18 +33,38 @@ export class AttendanceProvider extends BaseMapProvider {
             delete attendance[date][studentId];
         }
 
-        this.saveAll(attendance);
+        await this.api.create(attendance);
         return attendance[date];
     }
 
-    clearDate(date) {
-        const attendance = this.getAll();
+    async clearDate(date) {
+        const attendance = await this.getAll();
         delete attendance[date];
-        this.saveAll(attendance);
+        await this.api.create(attendance);
         return {};
     }
 
-    seed(seedData) {
-        this.saveAll(seedData ?? createEmptyAttendanceRecord());
+    async saveAll(items) {
+        return await this.api.create(items);
+    }
+
+    async create(item) {
+        return await this.api.create(item);
+    }
+
+    async update(id, updatedFields) {
+        return await this.api.update(id, updatedFields);
+    }
+
+    async delete(id) {
+        return await this.api.delete(id);
+    }
+
+    async seed(seedData) {
+        await this.api.create(seedData ?? createEmptyAttendanceRecord());
+    }
+
+    async clear() {
+        await this.api.create({});
     }
 }

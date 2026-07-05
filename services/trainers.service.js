@@ -7,46 +7,46 @@ export class TrainersService {
         this.modulesProvider = modulesProvider;
     }
 
-    getAll() {
-        return this.trainersProvider.getAll();
+    async getAll() {
+        return await this.trainersProvider.getAll();
     }
 
-    getById(id) {
-        return this.trainersProvider.getById(id);
+    async getById(id) {
+        return await this.trainersProvider.getById(id);
     }
 
-    getByModule(moduleId) {
-        const module = this.modulesProvider.getById(moduleId);
+    async getByModule(moduleId) {
+        const module = await this.modulesProvider.getById(moduleId);
         if (!module || !module.trainerId) return null;
-        return this.getById(module.trainerId);
+        return await this.getById(module.trainerId);
     }
 
-    getModules(trainerId) {
-        const modules = this.modulesProvider.getAll();
+    async getModules(trainerId) {
+        const modules = await this.modulesProvider.getAll();
         return modules.filter(m => m.trainerId === trainerId);
     }
 
-    create(input) {
+    async create(input) {
         const trainer = createTrainer(input);
-        return this.trainersProvider.create(trainer);
+        return await this.trainersProvider.create(trainer);
     }
 
-    update(id, updatedFields) {
-        const existing = this.trainersProvider.getById(id);
+    async update(id, updatedFields) {
+        const existing = await this.trainersProvider.getById(id);
         if (!existing) {
             throw new AppError('Formateur introuvable.', ErrorCodes.NOT_FOUND);
         }
         const updated = updateTrainerFields(existing, updatedFields);
-        return this.trainersProvider.update(id, updated);
+        return await this.trainersProvider.update(id, updated);
     }
 
-    delete(id) {
-        const deleted = this.trainersProvider.delete(id);
+    async delete(id) {
+        const deleted = await this.trainersProvider.delete(id);
         if (!deleted) {
             throw new AppError('Formateur introuvable.', ErrorCodes.NOT_FOUND);
         }
         if (this.modulesProvider) {
-            const modules = this.modulesProvider.getAll();
+            const modules = await this.modulesProvider.getAll();
             let updated = false;
             modules.forEach(mod => {
                 if (mod.trainerId === id) {
@@ -55,7 +55,7 @@ export class TrainersService {
                 }
             });
             if (updated) {
-                this.modulesProvider.saveAll(modules);
+                await this.modulesProvider.saveAll(modules);
             }
         }
         return deleted;

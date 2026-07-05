@@ -4,22 +4,23 @@ export class ScheduleService {
         this.modulesProvider = modulesProvider;
     }
 
-    getAll() {
-        return this.scheduleProvider.getAll().sort((a, b) => a.date.localeCompare(b.date));
+    async getAll() {
+        const schedule = await this.scheduleProvider.getAll();
+        return schedule.sort((a, b) => a.date.localeCompare(b.date));
     }
 
-    getByDate(date) {
-        const schedule = this.getAll();
+    async getByDate(date) {
+        const schedule = await this.getAll();
         return schedule.find(s => s.date === date) || null;
     }
 
-    getByModule(moduleId) {
-        const schedule = this.getAll();
+    async getByModule(moduleId) {
+        const schedule = await this.getAll();
         return schedule.filter(s => s.moduleId === moduleId);
     }
 
-    getWeeks() {
-        const schedule = this.getAll();
+    async getWeeks() {
+        const schedule = await this.getAll();
         if (schedule.length === 0) return [];
 
         const allDates = schedule.map(s => s.date).sort();
@@ -51,15 +52,15 @@ export class ScheduleService {
         return weeks;
     }
 
-    getWeekSchedule(weekDays) {
-        const schedule = this.getAll();
+    async getWeekSchedule(weekDays) {
+        const schedule = await this.getAll();
         return weekDays.map(date => {
             const entry = schedule.find(s => s.date === date);
             return entry || null;
         });
     }
 
-    clear() {
-        this.scheduleProvider.saveAll([]);
+    async clear() {
+        await this.scheduleProvider.saveAll([]);
     }
 }

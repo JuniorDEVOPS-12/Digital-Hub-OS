@@ -5,10 +5,10 @@ import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials, MODULE_COLORS } from '../../config/constants.js';
 import { PDFService } from '../../services/pdf.service.js';
 
-export function renderModules(container) {
-    function render() {
-        const modules = api.modules.getAll();
-        const trainers = api.trainers.getAll();
+export async function renderModules(container) {
+    async function render() {
+        const modules = await api.modules.getAll();
+        const trainers = await api.trainers.getAll();
 
         container.innerHTML = `
             <div class="section-header">
@@ -79,8 +79,8 @@ export function renderModules(container) {
         });
 
         container.querySelectorAll('[data-action="edit-module"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const mod = api.modules.getById(btn.dataset.id);
+            btn.addEventListener('click', async () => {
+                const mod = await api.modules.getById(btn.dataset.id);
                 if (mod) openModuleForm(mod, render);
             });
         });
@@ -143,7 +143,7 @@ function openModuleForm(mod = null, onSave) {
         `;
 
         $('#mfCancel').addEventListener('click', closeModal);
-        $('#moduleForm').addEventListener('submit', (e) => {
+        $('#moduleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
                 name: $('#mfName').value.trim(),
@@ -160,10 +160,10 @@ function openModuleForm(mod = null, onSave) {
             }
 
             if (isEdit) {
-                api.modules.update(mod.id, data);
+                await api.modules.update(mod.id, data);
                 showToast('Module modifié avec succès et planning régénéré');
             } else {
-                api.modules.create({ id: Math.random().toString(36).substring(2, 9), ...data });
+                await api.modules.create({ id: Math.random().toString(36).substring(2, 9), ...data });
                 showToast('Module ajouté avec succès et planning régénéré');
             }
             closeModal();
@@ -183,8 +183,8 @@ function confirmDeleteModule(moduleId, onDelete) {
         `;
 
         $('#cancelDelete').addEventListener('click', closeModal);
-        $('#confirmDeleteBtn').addEventListener('click', () => {
-            api.modules.delete(moduleId);
+        $('#confirmDeleteBtn').addEventListener('click', async () => {
+            await api.modules.delete(moduleId);
             closeModal();
             showToast('Module supprimé et planning régénéré');
             onDelete();
@@ -192,9 +192,9 @@ function confirmDeleteModule(moduleId, onDelete) {
     });
 }
 
-function openModulePDFMenu(moduleId, pdfService) {
-    const module = api.modules.getById(moduleId);
-    const trainer = api.trainers.getById(module.trainerId);
+async function openModulePDFMenu(moduleId, pdfService) {
+    const module = await api.modules.getById(moduleId);
+    const trainer = await api.trainers.getById(module.trainerId);
     
     openModal('Documents PDF - ' + module.name, (body) => {
         body.innerHTML = `
@@ -215,19 +215,19 @@ function openModulePDFMenu(moduleId, pdfService) {
         `;
 
         body.querySelectorAll('.pdf-menu-item').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const pdfType = btn.dataset.pdf;
                 closeModal();
                 
                 switch(pdfType) {
                     case 'materials':
-                        pdfService.generateTeachingMaterialsReceipt(trainer.id, moduleId);
+                        await pdfService.generateTeachingMaterialsReceipt(trainer.id, moduleId);
                         break;
                     case 'report':
-                        pdfService.generateModuleReport(moduleId);
+                        await pdfService.generateModuleReport(moduleId);
                         break;
                     case 'evaluation':
-                        pdfService.generateTrainerEvaluation(trainer.id, moduleId);
+                        await pdfService.generateTrainerEvaluation(trainer.id, moduleId);
                         break;
                 }
                 showToast('PDF généré avec succès');

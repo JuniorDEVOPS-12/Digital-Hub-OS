@@ -1,17 +1,17 @@
 import { api } from '../../backend/api.js';
 
-export function renderDashboard(container) {
-    const students = api.students.getAll();
+export async function renderDashboard(container) {
+    const students = await api.students.getAll();
     const totalStudents = students.length;
     const activeStudents = students.filter(s => s.status === 'active').length;
-    const trainers = api.trainers.getAll();
+    const trainers = await api.trainers.getAll();
     const totalTrainers = trainers.length;
-    const modules = api.modules.getAll();
+    const modules = await api.modules.getAll();
     const totalModules = modules.length;
 
     // Calculate attendance stats
     const activeStudentIds = students.filter(s => s.status === 'active').map(s => s.id);
-    const attStats = api.attendance.getStats(activeStudentIds);
+    const attStats = await api.attendance.getStats(activeStudentIds);
 
     const statsHTML = `
         <div class="stats-grid">
@@ -72,13 +72,13 @@ export function renderDashboard(container) {
         </div>
     `;
 
-    const modulesListHTML = modules.map(mod => {
+    const modulesListHTML = (await Promise.all(modules.map(async mod => {
         const trainer = trainers.find(t => t.id === mod.trainerId);
-        const scheduleDays = api.schedule.getAll().filter(s => s.moduleId === mod.id).length;
+        const scheduleDays = (await api.schedule.getAll()).filter(s => s.moduleId === mod.id).length;
         
         // determine status
         const today = new Date().toISOString().split('T')[0];
-        const modDates = api.schedule.getAll().filter(s => s.moduleId === mod.id).map(s => s.date).sort();
+        const modDates = (await api.schedule.getAll()).filter(s => s.moduleId === mod.id).map(s => s.date).sort();
         let statusBadge = '';
         if (modDates.length === 0) {
             statusBadge = '<span class="badge badge-info">Non planifié</span>';
@@ -100,10 +100,10 @@ export function renderDashboard(container) {
                 <div class="module-progress-status">${statusBadge}</div>
             </div>
         `;
-    }).join('');
+    }))).join('');
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const upcomingDays = api.schedule.getAll()
+    const upcomingDays = (await api.schedule.getAll())
         .filter(s => s.date >= todayStr)
         .slice(0, 5);
 

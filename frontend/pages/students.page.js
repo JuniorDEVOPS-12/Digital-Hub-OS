@@ -6,9 +6,9 @@ import { getAvatarColor, getInitials, STUDENT_STATUS } from '../../config/consta
 
 let searchTerm = '';
 
-export function renderStudents(container) {
-    function render() {
-        const filtered = api.students.search(searchTerm);
+export async function renderStudents(container) {
+    async function render() {
+        const filtered = await api.students.search(searchTerm);
 
         container.innerHTML = `
             <div class="section-header">
@@ -90,8 +90,8 @@ export function renderStudents(container) {
         if (addBtn) addBtn.addEventListener('click', () => openStudentForm(null, render));
 
         container.querySelectorAll('[data-action="edit-student"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const student = api.students.getById(btn.dataset.id);
+            btn.addEventListener('click', async () => {
+                const student = await api.students.getById(btn.dataset.id);
                 if (student) openStudentForm(student, render);
             });
         });
@@ -142,7 +142,7 @@ function openStudentForm(student = null, onSave) {
         `;
 
         $('#sfCancel').addEventListener('click', closeModal);
-        $('#studentForm').addEventListener('submit', (e) => {
+        $('#studentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
                 firstName: $('#sfFirstName').value.trim(),
@@ -159,10 +159,10 @@ function openStudentForm(student = null, onSave) {
 
             try {
                 if (isEdit) {
-                    api.students.update(student.id, data);
+                    await api.students.update(student.id, data);
                     showToast('Étudiant modifié avec succès');
                 } else {
-                    api.students.create({ id: Math.random().toString(36).substring(2, 9), ...data });
+                    await api.students.create({ id: Math.random().toString(36).substring(2, 9), ...data });
                     showToast('Étudiant ajouté avec succès');
                 }
                 closeModal();
@@ -185,8 +185,8 @@ function confirmDeleteStudent(studentId, onDelete) {
         `;
 
         $('#cancelDelete').addEventListener('click', closeModal);
-        $('#confirmDeleteBtn').addEventListener('click', () => {
-            api.students.delete(studentId);
+        $('#confirmDeleteBtn').addEventListener('click', async () => {
+            await api.students.delete(studentId);
             closeModal();
             showToast('Étudiant supprimé');
             onDelete();

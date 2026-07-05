@@ -16,11 +16,11 @@ export const storageAdapter = localStorageAdapter;
 
 /** Registre central des providers — seule couche d'accès aux données */
 export const dataAccess = {
-    students: new StudentsProvider(storageAdapter),
-    trainers: new TrainersProvider(storageAdapter),
-    modules: new ModulesProvider(storageAdapter),
-    attendance: new AttendanceProvider(storageAdapter),
-    schedule: new ScheduleProvider(storageAdapter),
+    students: new StudentsProvider(),
+    trainers: new TrainersProvider(),
+    modules: new ModulesProvider(),
+    attendance: new AttendanceProvider(),
+    schedule: new ScheduleProvider(),
     settings: new SettingsProvider(storageAdapter),
 };
 

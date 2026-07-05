@@ -29,28 +29,28 @@ const attendanceService = new AttendanceService(attendanceProvider);
 const scheduleService = new ScheduleService(scheduleProvider, modulesProvider);
 
 // Self-initialization & Seeding if empty
-export function initDatabase() {
-    let trainers = trainersProvider.getAll();
+export async function initDatabase() {
+    let trainers = await trainersProvider.getAll();
     if (trainers.length === 0) {
         trainers = seedTrainers();
-        trainersProvider.seed(trainers);
+        await trainersProvider.seed(trainers);
     }
 
-    let students = studentsProvider.getAll();
+    let students = await studentsProvider.getAll();
     if (students.length === 0) {
         students = seedStudents();
-        studentsProvider.seed(students);
+        await studentsProvider.seed(students);
     }
 
-    let modules = modulesProvider.getAll();
+    let modules = await modulesProvider.getAll();
     if (modules.length === 0) {
         modules = seedModules(trainers);
-        modulesProvider.seed(modules);
+        await modulesProvider.seed(modules);
     }
 
-    let schedule = scheduleProvider.getAll();
+    let schedule = await scheduleProvider.getAll();
     if (schedule.length === 0) {
-        modulesService.regenerateSchedule();
+        await modulesService.regenerateSchedule();
     }
 }
 

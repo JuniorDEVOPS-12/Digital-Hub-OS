@@ -5,10 +5,10 @@ import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials } from '../../config/constants.js';
 import { PDFService } from '../../services/pdf.service.js';
 
-export function renderTrainers(container) {
-    function render() {
-        const trainers = api.trainers.getAll();
-        const modules = api.modules.getAll();
+export async function renderTrainers(container) {
+    async function render() {
+        const trainers = await api.trainers.getAll();
+        const modules = await api.modules.getAll();
 
         container.innerHTML = `
             <div class="section-header">
@@ -79,8 +79,8 @@ export function renderTrainers(container) {
         });
 
         container.querySelectorAll('[data-action="edit-trainer"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const trainer = api.trainers.getById(btn.dataset.id);
+            btn.addEventListener('click', async () => {
+                const trainer = await api.trainers.getById(btn.dataset.id);
                 if (trainer) openTrainerForm(trainer, render);
             });
         });
@@ -128,7 +128,7 @@ function openTrainerForm(trainer = null, onSave) {
         `;
 
         $('#tfCancel').addEventListener('click', closeModal);
-        $('#trainerForm').addEventListener('submit', (e) => {
+        $('#trainerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
                 firstName: $('#tfFirstName').value.trim(),
@@ -144,10 +144,10 @@ function openTrainerForm(trainer = null, onSave) {
             }
 
             if (isEdit) {
-                api.trainers.update(trainer.id, data);
+                await api.trainers.update(trainer.id, data);
                 showToast('Formateur modifié avec succès');
             } else {
-                api.trainers.create({ id: Math.random().toString(36).substring(2, 9), ...data });
+                await api.trainers.create({ id: Math.random().toString(36).substring(2, 9), ...data });
                 showToast('Formateur ajouté avec succès');
             }
             closeModal();
@@ -167,8 +167,8 @@ function confirmDeleteTrainer(trainerId, onDelete) {
         `;
 
         $('#cancelDelete').addEventListener('click', closeModal);
-        $('#confirmDeleteBtn').addEventListener('click', () => {
-            api.trainers.delete(trainerId);
+        $('#confirmDeleteBtn').addEventListener('click', async () => {
+            await api.trainers.delete(trainerId);
             closeModal();
             showToast('Formateur supprimé');
             onDelete();
@@ -176,9 +176,9 @@ function confirmDeleteTrainer(trainerId, onDelete) {
     });
 }
 
-function openPDFMenu(trainerId, pdfService) {
-    const trainer = api.trainers.getById(trainerId);
-    const modules = api.trainers.getModules(trainerId);
+async function openPDFMenu(trainerId, pdfService) {
+    const trainer = await api.trainers.getById(trainerId);
+    const modules = await api.trainers.getModules(trainerId);
     
     openModal('Documents PDF - ' + trainer.firstName + ' ' + trainer.lastName, (body) => {
         body.innerHTML = `
@@ -211,28 +211,28 @@ function openPDFMenu(trainerId, pdfService) {
         `;
 
         body.querySelectorAll('.pdf-menu-item:not([disabled])').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const pdfType = btn.dataset.pdf;
                 closeModal();
                 
                 switch(pdfType) {
                     case 'contract':
-                        pdfService.generateTrainerContract(trainerId);
+                        await pdfService.generateTrainerContract(trainerId);
                         break;
                     case 'info':
-                        pdfService.generateTrainerInfoSheet(trainerId);
+                        await pdfService.generateTrainerInfoSheet(trainerId);
                         break;
                     case 'charter':
-                        pdfService.generateEngagementCharter(trainerId);
+                        await pdfService.generateEngagementCharter(trainerId);
                         break;
                     case 'schedule':
-                        pdfService.generateTrainerSchedule(trainerId);
+                        await pdfService.generateTrainerSchedule(trainerId);
                         break;
                     case 'honoraries':
-                        pdfService.generateHonorariesCalculation(trainerId);
+                        await pdfService.generateHonorariesCalculation(trainerId);
                         break;
                     case 'certificate':
-                        pdfService.generateCollaborationCertificate(trainerId);
+                        await pdfService.generateCollaborationCertificate(trainerId);
                         break;
                 }
                 showToast('PDF généré avec succès');

@@ -34,9 +34,13 @@ export class PDFService {
     }
 
     // 1. Contrat de prestation de service du formateur
-    generateTrainerContract(trainerId) {
-        const trainer = api.trainers.getById(trainerId);
-        if (!trainer) return null;
+    async generateTrainerContract(trainerId) {
+        console.log('PDF GENERATING: Trainer Contract for', trainerId);
+        const trainer = await api.trainers.getById(trainerId);
+        if (!trainer) {
+            console.log('PDF ERROR: Trainer not found', trainerId);
+            return null;
+        }
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Contrat de Prestation de Service');
@@ -127,13 +131,19 @@ export class PDFService {
         doc.text('Signature Digital Hub OS : ___________________', 110, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Trainer Contract');
         doc.save(`Contrat_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Trainer Contract');
     }
 
     // 2. Fiche de renseignements du formateur
-    generateTrainerInfoSheet(trainerId) {
-        const trainer = api.trainers.getById(trainerId);
-        if (!trainer) return null;
+    async generateTrainerInfoSheet(trainerId) {
+        console.log('PDF GENERATING: Trainer Info Sheet for', trainerId);
+        const trainer = await api.trainers.getById(trainerId);
+        if (!trainer) {
+            console.log('PDF ERROR: Trainer not found', trainerId);
+            return null;
+        }
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Fiche de Renseignements');
@@ -171,7 +181,7 @@ export class PDFService {
         doc.text('MODULES ASSIGNÉS', 20, y);
         y += 15;
 
-        const modules = api.trainers.getModules(trainerId);
+        const modules = await api.trainers.getModules(trainerId);
         if (modules.length === 0) {
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
@@ -190,13 +200,19 @@ export class PDFService {
         }
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Trainer Info Sheet');
         doc.save(`Fiche_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Trainer Info Sheet');
     }
 
     // 3. Charte d'engagement
-    generateEngagementCharter(trainerId) {
-        const trainer = api.trainers.getById(trainerId);
-        if (!trainer) return null;
+    async generateEngagementCharter(trainerId) {
+        console.log('PDF GENERATING: Engagement Charter for', trainerId);
+        const trainer = await api.trainers.getById(trainerId);
+        if (!trainer) {
+            console.log('PDF ERROR: Trainer not found', trainerId);
+            return null;
+        }
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Charte d\'Engagement');
@@ -282,16 +298,25 @@ export class PDFService {
         doc.text('Signature : ___________________', 20, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Engagement Charter');
         doc.save(`Charte_Engagement_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Engagement Charter');
     }
 
     // 4. Planning du formateur
-    generateTrainerSchedule(trainerId) {
-        const trainer = api.trainers.getById(trainerId);
-        if (!trainer) return null;
+    async generateTrainerSchedule(trainerId) {
+        console.log('PDF GENERATING: Trainer Schedule for', trainerId);
+        const trainer = await api.trainers.getById(trainerId);
+        if (!trainer) {
+            console.log('PDF ERROR: Trainer not found', trainerId);
+            return null;
+        }
 
-        const modules = api.trainers.getModules(trainerId);
-        if (modules.length === 0) return null;
+        const modules = await api.trainers.getModules(trainerId);
+        if (modules.length === 0) {
+            console.log('PDF ERROR: No modules for trainer', trainerId);
+            return null;
+        }
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Planning du Formateur');
@@ -305,8 +330,8 @@ export class PDFService {
         doc.text(`Formateur : ${trainer.firstName} ${trainer.lastName}`, 20, y);
         y += 15;
 
-        modules.forEach(mod => {
-            const scheduleEntries = api.schedule.getByModule(mod.id);
+        for (const mod of modules) {
+            const scheduleEntries = await api.schedule.getByModule(mod.id);
             
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
@@ -335,17 +360,20 @@ export class PDFService {
                 doc.addPage();
                 y = 20;
             }
-        });
+        }
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Trainer Schedule');
         doc.save(`Planning_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Trainer Schedule');
     }
 
     // 5. Fiche de présence
-    generateAttendanceSheet(date) {
-        const students = api.students.getAll().filter(s => s.status === 'active');
-        const attendance = api.attendance.getByDate(date);
-        const scheduleEntry = api.schedule.getByDate(date);
+    async generateAttendanceSheet(date) {
+        console.log('PDF GENERATING: Attendance Sheet for', date);
+        const students = (await api.students.getAll()).filter(s => s.status === 'active');
+        const attendance = await api.attendance.getByDate(date);
+        const scheduleEntry = await api.schedule.getByDate(date);
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Fiche de Présence');
@@ -360,8 +388,8 @@ export class PDFService {
         y += 10;
 
         if (scheduleEntry) {
-            const module = api.modules.getById(scheduleEntry.moduleId);
-            const trainer = module ? api.trainers.getById(module.trainerId) : null;
+            const module = await api.modules.getById(scheduleEntry.moduleId);
+            const trainer = module ? await api.trainers.getById(module.trainerId) : null;
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
             doc.text(`Module : ${module ? module.name : 'Non défini'}`, 20, y);
@@ -399,21 +427,27 @@ export class PDFService {
         });
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Attendance Sheet');
         doc.save(`Presence_${date}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Attendance Sheet');
     }
 
     // 6. Calcul des honoraires
-    generateHonorariesCalculation(trainerId, hourlyRate = 15000) {
-        const trainer = api.trainers.getById(trainerId);
-        if (!trainer) return null;
+    async generateHonorariesCalculation(trainerId, hourlyRate = 15000) {
+        console.log('PDF GENERATING: Honoraries Calculation for', trainerId);
+        const trainer = await api.trainers.getById(trainerId);
+        if (!trainer) {
+            console.log('PDF ERROR: Trainer not found', trainerId);
+            return null;
+        }
 
-        const modules = api.trainers.getModules(trainerId);
+        const modules = await api.trainers.getModules(trainerId);
         let totalHours = 0;
 
-        modules.forEach(mod => {
-            const scheduleEntries = api.schedule.getByModule(mod.id);
+        for (const mod of modules) {
+            const scheduleEntries = await api.schedule.getByModule(mod.id);
             totalHours += scheduleEntries.length * 3; // 3 hours per session
-        });
+        }
 
         const totalAmount = totalHours * hourlyRate;
 
@@ -448,8 +482,8 @@ export class PDFService {
         y += 10;
 
         doc.setFont(undefined, 'normal');
-        modules.forEach(mod => {
-            const scheduleEntries = api.schedule.getByModule(mod.id);
+        for (const mod of modules) {
+            const scheduleEntries = await api.schedule.getByModule(mod.id);
             const hours = scheduleEntries.length * 3;
             const amount = hours * hourlyRate;
 
@@ -458,7 +492,7 @@ export class PDFService {
             doc.text(hours.toString(), 110, y);
             doc.text(amount.toLocaleString('fr-FR') + ' FCFA', 140, y);
             y += 8;
-        });
+        }
 
         y += 15;
         doc.setFontSize(12);
@@ -473,14 +507,20 @@ export class PDFService {
         doc.text('Document généré le ' + this.formatDate(new Date().toISOString().split('T')[0]), 20, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Honoraries Calculation');
         doc.save(`Honoraires_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Honoraries Calculation');
     }
 
     // 7. Remise des supports pédagogiques
-    generateTeachingMaterialsReceipt(trainerId, moduleId) {
-        const trainer = api.trainers.getById(trainerId);
-        const module = api.modules.getById(moduleId);
-        if (!trainer || !module) return null;
+    async generateTeachingMaterialsReceipt(trainerId, moduleId) {
+        console.log('PDF GENERATING: Teaching Materials Receipt for', trainerId, moduleId);
+        const trainer = await api.trainers.getById(trainerId);
+        const module = await api.modules.getById(moduleId);
+        if (!trainer || !module) {
+            console.log('PDF ERROR: Trainer or module not found', trainerId, moduleId);
+            return null;
+        }
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Remise des Supports Pédagogiques');
@@ -528,17 +568,23 @@ export class PDFService {
         doc.text('Signature du responsable : ___________________', 20, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Teaching Materials Receipt');
         doc.save(`Supports_${module.name.replace(/\s+/g, '_')}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Teaching Materials Receipt');
     }
 
     // 8. Rapport de fin de module
-    generateModuleReport(moduleId) {
-        const module = api.modules.getById(moduleId);
-        if (!module) return null;
+    async generateModuleReport(moduleId) {
+        console.log('PDF GENERATING: Module Report for', moduleId);
+        const module = await api.modules.getById(moduleId);
+        if (!module) {
+            console.log('PDF ERROR: Module not found', moduleId);
+            return null;
+        }
 
-        const trainer = api.trainers.getById(module.trainerId);
-        const scheduleEntries = api.schedule.getByModule(moduleId);
-        const students = api.students.getAll().filter(s => s.status === 'active');
+        const trainer = await api.trainers.getById(module.trainerId);
+        const scheduleEntries = await api.schedule.getByModule(moduleId);
+        const students = (await api.students.getAll()).filter(s => s.status === 'active');
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Rapport de Fin de Module');
@@ -606,14 +652,20 @@ export class PDFService {
         doc.text('Signature du formateur : ___________________', 20, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Module Report');
         doc.save(`Rapport_${module.name.replace(/\s+/g, '_')}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Module Report');
     }
 
     // 9. Évaluation du formateur
-    generateTrainerEvaluation(trainerId, moduleId) {
-        const trainer = api.trainers.getById(trainerId);
-        const module = api.modules.getById(moduleId);
-        if (!trainer || !module) return null;
+    async generateTrainerEvaluation(trainerId, moduleId) {
+        console.log('PDF GENERATING: Trainer Evaluation for', trainerId, moduleId);
+        const trainer = await api.trainers.getById(trainerId);
+        const module = await api.modules.getById(moduleId);
+        if (!trainer || !module) {
+            console.log('PDF ERROR: Trainer or module not found', trainerId, moduleId);
+            return null;
+        }
 
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Évaluation du Formateur');
@@ -683,15 +735,21 @@ export class PDFService {
         doc.text('Signature de l\'évaluateur : ___________________', 20, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Trainer Evaluation');
         doc.save(`Evaluation_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Trainer Evaluation');
     }
 
     // 10. Attestation de collaboration
-    generateCollaborationCertificate(trainerId) {
-        const trainer = api.trainers.getById(trainerId);
-        if (!trainer) return null;
+    async generateCollaborationCertificate(trainerId) {
+        console.log('PDF GENERATING: Collaboration Certificate for', trainerId);
+        const trainer = await api.trainers.getById(trainerId);
+        if (!trainer) {
+            console.log('PDF ERROR: Trainer not found', trainerId);
+            return null;
+        }
 
-        const modules = api.trainers.getModules(trainerId);
+        const modules = await api.trainers.getModules(trainerId);
         const doc = new this.jsPDF();
         this.addHeader(doc, 'Attestation de Collaboration');
 
@@ -743,6 +801,8 @@ export class PDFService {
         doc.text('Cachet de l\'établissement : ___________________', 20, y);
 
         this.addFooter(doc);
+        console.log('PDF CREATED: Collaboration Certificate');
         doc.save(`Attestation_${trainer.firstName}_${trainer.lastName}.pdf`);
+        console.log('DOWNLOAD TRIGGERED: Collaboration Certificate');
     }
 }

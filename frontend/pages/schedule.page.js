@@ -3,11 +3,11 @@ import { $ } from '../core/dom.js';
 import { PDFService } from '../../services/pdf.service.js';
 import { DAY_NAMES } from '../../config/constants.js';
 
-export function renderSchedule(container) {
-    const schedule = api.schedule.getAll();
-    const modules = api.modules.getAll();
-    const trainers = api.trainers.getAll();
-    const weeks = api.schedule.getWeeks();
+export async function renderSchedule(container) {
+    const schedule = await api.schedule.getAll();
+    const modules = await api.modules.getAll();
+    const trainers = await api.trainers.getAll();
+    const weeks = await api.schedule.getWeeks();
 
     if (schedule.length === 0 || weeks.length === 0) {
         container.innerHTML = `
@@ -33,8 +33,9 @@ export function renderSchedule(container) {
         currentWeek = todayWeekIdx;
     }
 
-    function renderWeek() {
+    async function renderWeek() {
         const week = weeks[currentWeek];
+        const weekSchedule = await api.schedule.getWeekSchedule(week.days);
 
         let gridHTML = `
             <div class="week-nav">
@@ -107,8 +108,8 @@ export function renderSchedule(container) {
             nextBtn.addEventListener('click', () => { currentWeek++; renderWeek(); });
         }
         if (pdfBtn) {
-            pdfBtn.addEventListener('click', () => {
-                pdfService.generateAttendanceSheet(week.days[0]);
+            pdfBtn.addEventListener('click', async () => {
+                await pdfService.generateAttendanceSheet(week.days[0]);
             });
         }
     }

@@ -10,83 +10,84 @@ export class ModulesService {
         this.trainersProvider = trainersProvider;
     }
 
-    getAll() {
-        return this.modulesProvider.getAll().sort((a, b) => a.order - b.order);
+    async getAll() {
+        const modules = await this.modulesProvider.getAll();
+        return modules.sort((a, b) => a.order - b.order);
     }
 
-    getById(id) {
-        return this.modulesProvider.getById(id);
+    async getById(id) {
+        return await this.modulesProvider.getById(id);
     }
 
-    getActiveModule(date) {
-        const schedule = this.scheduleProvider.getAll();
+    async getActiveModule(date) {
+        const schedule = await this.scheduleProvider.getAll();
         const todayEntry = schedule.find(s => s.date === date);
         if (!todayEntry) return null;
 
-        const modules = this.getAll();
+        const modules = await this.getAll();
         return modules.find(m => m.id === todayEntry.moduleId) || null;
     }
 
-    getTrainer(moduleId) {
-        const module = this.getById(moduleId);
+    async getTrainer(moduleId) {
+        const module = await this.getById(moduleId);
         if (!module || !module.trainerId) return null;
-        return this.trainersProvider.getById(module.trainerId);
+        return await this.trainersProvider.getById(module.trainerId);
     }
 
-    create(input) {
+    async create(input) {
         if (!input.trainerId) {
             throw new AppError('Un formateur doit être assigné au module', ErrorCodes.VALIDATION);
         }
 
-        const trainer = this.trainersProvider.getById(input.trainerId);
+        const trainer = await this.trainersProvider.getById(input.trainerId);
         if (!trainer) {
             throw new AppError('Le formateur spécifié n\'existe pas', ErrorCodes.NOT_FOUND);
         }
 
         const moduleItem = createModule(input);
-        const created = this.modulesProvider.create(moduleItem);
-        this.regenerateSchedule();
+        const created = await this.modulesProvider.create(moduleItem);
+        await this.regenerateSchedule();
         return created;
     }
 
-    update(id, updatedFields) {
+    async update(id, updatedFields) {
         if (updatedFields.trainerId) {
-            const trainer = this.trainersProvider.getById(updatedFields.trainerId);
+            const trainer = await this.trainersProvider.getById(updatedFields.trainerId);
             if (!trainer) {
                 throw new AppError('Le formateur spécifié n\'existe pas', ErrorCodes.NOT_FOUND);
             }
         }
 
-        const existing = this.modulesProvider.getById(id);
+        const existing = await this.modulesProvider.getById(id);
         if (!existing) {
             throw new AppError('Module introuvable.', ErrorCodes.NOT_FOUND);
         }
 
         const updated = updateModuleFields(existing, updatedFields);
-        const result = this.modulesProvider.update(id, updated);
+        const result = await this.modulesProvider.update(id, updated);
 
         if (updatedFields.duration !== undefined || updatedFields.order !== undefined) {
-            this.regenerateSchedule();
+            await this.regenerateSchedule();
         }
 
         return result;
     }
 
-    delete(id) {
-        const deleted = this.modulesProvider.delete(id);
+    async delete(id) {
+        const deleted = await this.modulesProvider.delete(id);
         if (!deleted) {
             throw new AppError('Module introuvable.', ErrorCodes.NOT_FOUND);
         }
-        this.regenerateSchedule();
+        await this.regenerateSchedule();
         return deleted;
     }
 
-    regenerateSchedule() {
+    async regenerateSchedule() {
         if (!this.scheduleProvider) return;
-        const modules = this.getAll();
+        const modules = await this.getAll();
 
         if (modules.length === 0) {
-            this.scheduleProvider.saveAll([]);
+            await this.scheduleProvider.saveAll([]);
             return;
         }
 
@@ -97,7 +98,7 @@ export class ModulesService {
         }
 
         const newSchedule = this.generateSchedule(startDate, modules);
-        this.scheduleProvider.saveAll(newSchedule);
+        await this.scheduleProvider.saveAll(newSchedule);
     }
 
     generateSchedule(startDate, modules) {

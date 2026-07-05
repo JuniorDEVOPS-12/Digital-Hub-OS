@@ -6,36 +6,36 @@ export class AttendanceService {
         this.attendanceProvider = attendanceProvider;
     }
 
-    getByDate(date) {
-        return this.attendanceProvider.getByDate(date);
+    async getByDate(date) {
+        return await this.attendanceProvider.getByDate(date);
     }
 
-    setStatus(date, studentId, status) {
+    async setStatus(date, studentId, status) {
         if (status && !isValidAttendanceStatus(status)) {
             throw new AppError('Statut de présence invalide.', ErrorCodes.VALIDATION);
         }
-        return this.attendanceProvider.setStatus(date, studentId, status);
+        return await this.attendanceProvider.setStatus(date, studentId, status);
     }
 
-    markAllPresent(date, activeStudentIds) {
-        const current = this.getByDate(date);
+    async markAllPresent(date, activeStudentIds) {
+        const current = await this.getByDate(date);
         const updated = { ...current };
         activeStudentIds.forEach(id => {
             updated[id] = ATTENDANCE_STATUS.PRESENT;
         });
-        this.attendanceProvider.saveAll({
-            ...this.attendanceProvider.getAll(),
+        await this.attendanceProvider.saveAll({
+            ...(await this.attendanceProvider.getAll()),
             [date]: updated,
         });
         return updated;
     }
 
-    clear(date) {
-        return this.attendanceProvider.clearDate(date);
+    async clear(date) {
+        return await this.attendanceProvider.clearDate(date);
     }
 
-    getStats(activeStudentIds) {
-        const attendanceData = this.attendanceProvider.getAll();
+    async getStats(activeStudentIds) {
+        const attendanceData = await this.attendanceProvider.getAll();
         let totalPresent = 0;
         let totalRecords = 0;
 

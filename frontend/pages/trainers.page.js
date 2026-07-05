@@ -1,5 +1,5 @@
 import { api } from '../../backend/api.js';
-import { $ } from '../core/dom.js';
+import { $, delegateEvent } from '../core/dom.js';
 import { openModal, closeModal } from '../core/modal.js';
 import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials } from '../../config/constants.js';
@@ -69,27 +69,27 @@ export async function renderTrainers(container) {
             </div>
         `;
 
-        $('#addTrainerBtn').addEventListener('click', () => {
+        // Event delegation pour le bouton Ajouter formateur
+        delegateEvent(container, '#addTrainerBtn', 'click', () => {
             console.log('TRAINER BUTTON CLICKED');
             openTrainerForm(null, render);
         });
 
-        container.querySelectorAll('[data-action="pdf-trainer"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const pdfService = new PDFService();
-                openPDFMenu(btn.dataset.id, pdfService);
-            });
+        // Event delegation pour les boutons PDF
+        delegateEvent(container, '[data-action="pdf-trainer"]', 'click', (e, target) => {
+            const pdfService = new PDFService();
+            openPDFMenu(target.dataset.id, pdfService);
         });
 
-        container.querySelectorAll('[data-action="edit-trainer"]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const trainer = await api.trainers.getById(btn.dataset.id);
-                if (trainer) openTrainerForm(trainer, render);
-            });
+        // Event delegation pour les boutons Edit
+        delegateEvent(container, '[data-action="edit-trainer"]', 'click', async (e, target) => {
+            const trainer = await api.trainers.getById(target.dataset.id);
+            if (trainer) openTrainerForm(trainer, render);
         });
 
-        container.querySelectorAll('[data-action="delete-trainer"]').forEach(btn => {
-            btn.addEventListener('click', () => confirmDeleteTrainer(btn.dataset.id, render));
+        // Event delegation pour les boutons Delete
+        delegateEvent(container, '[data-action="delete-trainer"]', 'click', (e, target) => {
+            confirmDeleteTrainer(target.dataset.id, render);
         });
     }
 

@@ -1,5 +1,5 @@
 import { api } from '../../backend/api.js';
-import { $, el } from '../core/dom.js';
+import { $, el, delegateEvent } from '../core/dom.js';
 import { openModal, closeModal } from '../core/modal.js';
 import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials, STUDENT_STATUS } from '../../config/constants.js';
@@ -86,18 +86,21 @@ export async function renderStudents(container) {
             });
         }
 
-        const addBtn = $('#addStudentBtn');
-        if (addBtn) addBtn.addEventListener('click', () => openStudentForm(null, render));
-
-        container.querySelectorAll('[data-action="edit-student"]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const student = await api.students.getById(btn.dataset.id);
-                if (student) openStudentForm(student, render);
-            });
+        // Event delegation pour le bouton Ajouter étudiant
+        delegateEvent(container, '#addStudentBtn', 'click', () => {
+            console.log('STUDENT BUTTON CLICKED');
+            openStudentForm(null, render);
         });
 
-        container.querySelectorAll('[data-action="delete-student"]').forEach(btn => {
-            btn.addEventListener('click', () => confirmDeleteStudent(btn.dataset.id, render));
+        // Event delegation pour les boutons Edit
+        delegateEvent(container, '[data-action="edit-student"]', 'click', async (e, target) => {
+            const student = await api.students.getById(target.dataset.id);
+            if (student) openStudentForm(student, render);
+        });
+
+        // Event delegation pour les boutons Delete
+        delegateEvent(container, '[data-action="delete-student"]', 'click', (e, target) => {
+            confirmDeleteStudent(target.dataset.id, render);
         });
     }
 

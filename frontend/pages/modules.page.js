@@ -1,5 +1,5 @@
 import { api } from '../../backend/api.js';
-import { $ } from '../core/dom.js';
+import { $, delegateEvent } from '../core/dom.js';
 import { openModal, closeModal } from '../core/modal.js';
 import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials, MODULE_COLORS } from '../../config/constants.js';
@@ -69,27 +69,27 @@ export async function renderModules(container) {
             </div>
         `;
 
-        $('#addModuleBtn').addEventListener('click', () => {
+        // Event delegation pour le bouton Ajouter module
+        delegateEvent(container, '#addModuleBtn', 'click', () => {
             console.log('MODULE BUTTON CLICKED');
             openModuleForm(null, render);
         });
 
-        container.querySelectorAll('[data-action="pdf-module"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const pdfService = new PDFService();
-                openModulePDFMenu(btn.dataset.id, pdfService);
-            });
+        // Event delegation pour les boutons PDF
+        delegateEvent(container, '[data-action="pdf-module"]', 'click', (e, target) => {
+            const pdfService = new PDFService();
+            openModulePDFMenu(target.dataset.id, pdfService);
         });
 
-        container.querySelectorAll('[data-action="edit-module"]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const mod = await api.modules.getById(btn.dataset.id);
-                if (mod) openModuleForm(mod, render);
-            });
+        // Event delegation pour les boutons Edit
+        delegateEvent(container, '[data-action="edit-module"]', 'click', async (e, target) => {
+            const mod = await api.modules.getById(target.dataset.id);
+            if (mod) openModuleForm(mod, render);
         });
 
-        container.querySelectorAll('[data-action="delete-module"]').forEach(btn => {
-            btn.addEventListener('click', () => confirmDeleteModule(btn.dataset.id, render));
+        // Event delegation pour les boutons Delete
+        delegateEvent(container, '[data-action="delete-module"]', 'click', (e, target) => {
+            confirmDeleteModule(target.dataset.id, render);
         });
     }
 

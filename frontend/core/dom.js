@@ -20,3 +20,20 @@ export function el(tag, attrs = {}, children = []) {
     }
     return element;
 }
+
+/**
+ * Event delegation - attache un listener sur un container parent
+ * qui délègue les événements aux éléments enfants correspondant au sélecteur
+ * @param {HTMLElement} container - Élément parent
+ * @param {string} selector - Sélecteur CSS des éléments cibles
+ * @param {string} eventType - Type d'événement (click, change, etc.)
+ * @param {Function} handler - Handler à exécuter
+ */
+export function delegateEvent(container, selector, eventType, handler) {
+    container.addEventListener(eventType, (e) => {
+        const target = e.target.closest(selector);
+        if (target && container.contains(target)) {
+            handler.call(target, e, target);
+        }
+    });
+}

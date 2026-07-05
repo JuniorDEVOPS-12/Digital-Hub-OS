@@ -1,5 +1,5 @@
 import { api } from '../../backend/api.js';
-import { $ } from '../core/dom.js';
+import { $, delegateEvent } from '../core/dom.js';
 import { PDFService } from '../../services/pdf.service.js';
 import { DAY_NAMES } from '../../config/constants.js';
 
@@ -96,22 +96,25 @@ export async function renderSchedule(container) {
         gridHTML += '</div>';
         container.innerHTML = gridHTML;
 
-        // Nav click event bindings
-        const prevBtn = $('#prevWeek');
-        const nextBtn = $('#nextWeek');
-        const pdfBtn = $('#downloadWeekPDF');
-        
-        if (prevBtn && currentWeek > 0) {
-            prevBtn.addEventListener('click', () => { currentWeek--; renderWeek(); });
-        }
-        if (nextBtn && currentWeek < weeks.length - 1) {
-            nextBtn.addEventListener('click', () => { currentWeek++; renderWeek(); });
-        }
-        if (pdfBtn) {
-            pdfBtn.addEventListener('click', async () => {
-                await pdfService.generateAttendanceSheet(week.days[0]);
-            });
-        }
+        // Event delegation pour les boutons de navigation
+        delegateEvent(container, '#prevWeek', 'click', () => {
+            if (currentWeek > 0) {
+                currentWeek--;
+                renderWeek();
+            }
+        });
+
+        delegateEvent(container, '#nextWeek', 'click', () => {
+            if (currentWeek < weeks.length - 1) {
+                currentWeek++;
+                renderWeek();
+            }
+        });
+
+        // Event delegation pour le bouton PDF
+        delegateEvent(container, '#downloadWeekPDF', 'click', async () => {
+            await pdfService.generateAttendanceSheet(week.days[0]);
+        });
     }
 
     renderWeek();

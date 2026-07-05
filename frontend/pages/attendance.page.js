@@ -1,5 +1,5 @@
 import { api } from '../../backend/api.js';
-import { $ } from '../core/dom.js';
+import { $, delegateEvent } from '../core/dom.js';
 import { showToast } from '../core/toast.js';
 import { getAvatarColor, getInitials, ATTENDANCE_STATUS, formatDateFR } from '../../config/constants.js';
 import { PDFService } from '../../services/pdf.service.js';
@@ -112,42 +112,49 @@ export async function renderAttendance(container) {
             </div>
         `;
 
-        // Add event listeners
-        const prevBtn = $('#prevDate');
-        const nextBtn = $('#nextDate');
-        if (prevBtn && currentDateIdx > 0) {
-            prevBtn.addEventListener('click', () => { currentDateIdx--; renderDay(); });
-        }
-        if (nextBtn && currentDateIdx < scheduled.length - 1) {
-            nextBtn.addEventListener('click', () => { currentDateIdx++; renderDay(); });
-        }
-
-        container.querySelectorAll('.attendance-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const studentId = btn.dataset.student;
-                const status = btn.dataset.status;
-                const active = btn.classList.contains('active');
-                
-                // Toggle status
-                await api.attendance.setStatus(dateStr, studentId, active ? null : status);
+        // Event delegation pour les boutons de navigation
+        delegateEvent(container, '#prevDate', 'click', () => {
+            if (currentDateIdx > 0) {
+                currentDateIdx--;
                 renderDay();
-            });
+            }
         });
 
-        $('#markAllPresent').addEventListener('click', async () => {
+        delegateEvent(container, '#nextDate', 'click', () => {
+            if (currentDateIdx < scheduled.length - 1) {
+                currentDateIdx++;
+                renderDay();
+            }
+        });
+
+        // Event delegation pour les boutons de présence
+        delegateEvent(container, '.attendance-btn', 'click', async (e, target) => {
+            const studentId = target.dataset.student;
+            const status = target.dataset.status;
+            const active = target.classList.contains('active');
+            
+            // Toggle status
+            await api.attendance.setStatus(dateStr, studentId, active ? null : status);
+            renderDay();
+        });
+
+        // Event delegation pour le bouton marquer tous présents
+        delegateEvent(container, '#markAllPresent', 'click', async () => {
             const studentIds = activeStudents.map(s => s.id);
             await api.attendance.markAllPresent(dateStr, studentIds);
             showToast('Tous les étudiants marqués présents');
             renderDay();
         });
 
-        $('#clearAll').addEventListener('click', async () => {
+        // Event delegation pour le bouton clear
+        delegateEvent(container, '#clearAll', 'click', async () => {
             await api.attendance.clear(dateStr);
             showToast('Présences réinitialisées', 'info');
             renderDay();
         });
 
-        $('#downloadAttendancePDF').addEventListener('click', async () => {
+        // Event delegation pour le bouton PDF
+        delegateEvent(container, '#downloadAttendancePDF', 'click', async () => {
             await pdfService.generateAttendanceSheet(dateStr);
             showToast('PDF généré avec succès');
         });

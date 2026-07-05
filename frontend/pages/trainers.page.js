@@ -69,7 +69,10 @@ export async function renderTrainers(container) {
             </div>
         `;
 
-        $('#addTrainerBtn').addEventListener('click', () => openTrainerForm(null, render));
+        $('#addTrainerBtn').addEventListener('click', () => {
+            console.log('TRAINER BUTTON CLICKED');
+            openTrainerForm(null, render);
+        });
 
         container.querySelectorAll('[data-action="pdf-trainer"]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -93,7 +96,8 @@ export async function renderTrainers(container) {
     render();
 }
 
-function openTrainerForm(trainer = null, onSave) {
+async function openTrainerForm(trainer = null, onSave) {
+    console.log('TRAINER FORM OPENING', trainer ? 'EDIT' : 'CREATE');
     const isEdit = !!trainer;
     openModal(isEdit ? 'Modifier le formateur' : 'Nouveau formateur', (body) => {
         body.innerHTML = `
@@ -130,6 +134,7 @@ function openTrainerForm(trainer = null, onSave) {
         $('#tfCancel').addEventListener('click', closeModal);
         $('#trainerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('TRAINER SUBMIT START', { isEdit });
             const data = {
                 firstName: $('#tfFirstName').value.trim(),
                 lastName: $('#tfLastName').value.trim(),
@@ -137,21 +142,32 @@ function openTrainerForm(trainer = null, onSave) {
                 phone: $('#tfPhone').value.trim(),
                 specialty: $('#tfSpecialty').value.trim(),
             };
+            console.log('TRAINER FORM DATA', data);
 
             if (!data.firstName || !data.lastName || !data.email || !data.specialty) {
                 showToast('Veuillez remplir tous les champs obligatoires', 'error');
                 return;
             }
 
-            if (isEdit) {
-                await api.trainers.update(trainer.id, data);
-                showToast('Formateur modifié avec succès');
-            } else {
-                await api.trainers.create({ id: Math.random().toString(36).substring(2, 9), ...data });
-                showToast('Formateur ajouté avec succès');
+            try {
+                if (isEdit) {
+                    console.log('TRAINER UPDATE START', trainer.id);
+                    await api.trainers.update(trainer.id, data);
+                    console.log('TRAINER UPDATE SUCCESS');
+                    showToast('Formateur modifié avec succès');
+                } else {
+                    console.log('TRAINER INSERT START');
+                    const newId = Math.random().toString(36).substring(2, 9);
+                    await api.trainers.create({ id: newId, ...data });
+                    console.log('TRAINER INSERT SUCCESS', newId);
+                    showToast('Formateur ajouté avec succès');
+                }
+                closeModal();
+                onSave();
+            } catch (err) {
+                console.error('TRAINER INSERT ERROR', err);
+                showToast('Erreur lors de l\'enregistrement: ' + err.message, 'error');
             }
-            closeModal();
-            onSave();
         });
     });
 }

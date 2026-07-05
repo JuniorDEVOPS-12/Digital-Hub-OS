@@ -69,7 +69,10 @@ export async function renderModules(container) {
             </div>
         `;
 
-        $('#addModuleBtn').addEventListener('click', () => openModuleForm(null, render));
+        $('#addModuleBtn').addEventListener('click', () => {
+            console.log('MODULE BUTTON CLICKED');
+            openModuleForm(null, render);
+        });
 
         container.querySelectorAll('[data-action="pdf-module"]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -93,11 +96,13 @@ export async function renderModules(container) {
     render();
 }
 
-function openModuleForm(mod = null, onSave) {
+async function openModuleForm(mod = null, onSave) {
+    console.log('MODULE FORM OPENING', mod ? 'EDIT' : 'CREATE');
     const isEdit = !!mod;
-    const modules = api.modules.getAll();
-    const trainers = api.trainers.getAll();
+    const modules = await api.modules.getAll();
+    const trainers = await api.trainers.getAll();
     const nextOrder = modules.length > 0 ? Math.max(...modules.map(m => m.order)) + 1 : 1;
+    console.log('MODULE FORM DATA LOADED', { modulesCount: modules.length, trainersCount: trainers.length, nextOrder });
 
     openModal(isEdit ? 'Modifier le module' : 'Nouveau module', (body) => {
         body.innerHTML = `
@@ -145,6 +150,7 @@ function openModuleForm(mod = null, onSave) {
         $('#mfCancel').addEventListener('click', closeModal);
         $('#moduleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('MODULE SUBMIT START', { isEdit });
             const data = {
                 name: $('#mfName').value.trim(),
                 order: parseInt($('#mfOrder').value),
@@ -153,21 +159,32 @@ function openModuleForm(mod = null, onSave) {
                 color: $('#mfColor').value,
                 description: $('#mfDesc').value.trim(),
             };
+            console.log('MODULE FORM DATA', data);
 
             if (!data.name || !data.trainerId) {
                 showToast('Veuillez remplir tous les champs obligatoires', 'error');
                 return;
             }
 
-            if (isEdit) {
-                await api.modules.update(mod.id, data);
-                showToast('Module modifié avec succès et planning régénéré');
-            } else {
-                await api.modules.create({ id: Math.random().toString(36).substring(2, 9), ...data });
-                showToast('Module ajouté avec succès et planning régénéré');
+            try {
+                if (isEdit) {
+                    console.log('MODULE UPDATE START', mod.id);
+                    await api.modules.update(mod.id, data);
+                    console.log('MODULE UPDATE SUCCESS');
+                    showToast('Module modifié avec succès et planning régénéré');
+                } else {
+                    console.log('MODULE INSERT START');
+                    const newId = Math.random().toString(36).substring(2, 9);
+                    await api.modules.create({ id: newId, ...data });
+                    console.log('MODULE INSERT SUCCESS', newId);
+                    showToast('Module ajouté avec succès et planning régénéré');
+                }
+                closeModal();
+                onSave();
+            } catch (err) {
+                console.error('MODULE INSERT ERROR', err);
+                showToast('Erreur lors de l\'enregistrement: ' + err.message, 'error');
             }
-            closeModal();
-            onSave();
         });
     });
 }

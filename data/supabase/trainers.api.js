@@ -68,15 +68,19 @@ export class TrainersAPI {
     }
 
     async create(trainer) {
+        console.log('[TrainersAPI] CREATE START', trainer);
         if (this.useLocalStorage) {
+            console.log('[TrainersAPI] USING LOCALSTORAGE FALLBACK');
             const raw = localStorage.getItem('dhos_trainers');
             const trainers = raw ? JSON.parse(raw) : [];
             trainers.push(trainer);
             localStorage.setItem('dhos_trainers', JSON.stringify(trainers));
+            console.log('[TrainersAPI] LOCALSTORAGE INSERT SUCCESS');
             return trainer;
         }
 
         try {
+            console.log('[TrainersAPI] SUPABASE INSERT START', this.tableName);
             const { data, error } = await this.supabase
                 .from(this.tableName)
                 .insert(trainer)
@@ -84,21 +88,26 @@ export class TrainersAPI {
                 .single();
 
             if (error) {
-                console.error('[TrainersAPI] Error creating trainer:', error);
+                console.error('[TrainersAPI] SUPABASE INSERT ERROR:', error);
+                console.log('[TrainersAPI] FALLING BACK TO LOCALSTORAGE');
                 const raw = localStorage.getItem('dhos_trainers');
                 const trainers = raw ? JSON.parse(raw) : [];
                 trainers.push(trainer);
                 localStorage.setItem('dhos_trainers', JSON.stringify(trainers));
+                console.log('[TrainersAPI] LOCALSTORAGE FALLBACK SUCCESS');
                 return trainer;
             }
 
+            console.log('[TrainersAPI] SUPABASE INSERT SUCCESS', data);
             return data;
         } catch (e) {
-            console.error('[TrainersAPI] Error creating trainer:', e);
+            console.error('[TrainersAPI] SUPABASE INSERT EXCEPTION:', e);
+            console.log('[TrainersAPI] FALLING BACK TO LOCALSTORAGE');
             const raw = localStorage.getItem('dhos_trainers');
             const trainers = raw ? JSON.parse(raw) : [];
             trainers.push(trainer);
             localStorage.setItem('dhos_trainers', JSON.stringify(trainers));
+            console.log('[TrainersAPI] LOCALSTORAGE FALLBACK SUCCESS');
             return trainer;
         }
     }

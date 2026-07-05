@@ -68,15 +68,19 @@ export class ModulesAPI {
     }
 
     async create(module) {
+        console.log('[ModulesAPI] CREATE START', module);
         if (this.useLocalStorage) {
+            console.log('[ModulesAPI] USING LOCALSTORAGE FALLBACK');
             const raw = localStorage.getItem('dhos_modules');
             const modules = raw ? JSON.parse(raw) : [];
             modules.push(module);
             localStorage.setItem('dhos_modules', JSON.stringify(modules));
+            console.log('[ModulesAPI] LOCALSTORAGE INSERT SUCCESS');
             return module;
         }
 
         try {
+            console.log('[ModulesAPI] SUPABASE INSERT START', this.tableName);
             const { data, error } = await this.supabase
                 .from(this.tableName)
                 .insert(module)
@@ -84,21 +88,26 @@ export class ModulesAPI {
                 .single();
 
             if (error) {
-                console.error('[ModulesAPI] Error creating module:', error);
+                console.error('[ModulesAPI] SUPABASE INSERT ERROR:', error);
+                console.log('[ModulesAPI] FALLING BACK TO LOCALSTORAGE');
                 const raw = localStorage.getItem('dhos_modules');
                 const modules = raw ? JSON.parse(raw) : [];
                 modules.push(module);
                 localStorage.setItem('dhos_modules', JSON.stringify(modules));
+                console.log('[ModulesAPI] LOCALSTORAGE FALLBACK SUCCESS');
                 return module;
             }
 
+            console.log('[ModulesAPI] SUPABASE INSERT SUCCESS', data);
             return data;
         } catch (e) {
-            console.error('[ModulesAPI] Error creating module:', e);
+            console.error('[ModulesAPI] SUPABASE INSERT EXCEPTION:', e);
+            console.log('[ModulesAPI] FALLING BACK TO LOCALSTORAGE');
             const raw = localStorage.getItem('dhos_modules');
             const modules = raw ? JSON.parse(raw) : [];
             modules.push(module);
             localStorage.setItem('dhos_modules', JSON.stringify(modules));
+            console.log('[ModulesAPI] LOCALSTORAGE FALLBACK SUCCESS');
             return module;
         }
     }
